@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerMovements : MonoBehaviour
 {
     private PlayerInput playerInput;
@@ -18,7 +19,7 @@ public class PlayerMovements : MonoBehaviour
     }
 
     private Animator animator;
-
+    private CharacterController characterController;
     private Transform camTransform;
 
     private void Start()
@@ -35,6 +36,12 @@ public class PlayerMovements : MonoBehaviour
         if (animator == null)
         {
             Debug.LogError("Animator component not found!");
+        }
+
+        characterController = GetComponent<CharacterController>();
+        if (characterController == null)
+        {
+            Debug.LogError("CharacterController component not found!");
         }
 
         camTransform = Camera.main.transform;
@@ -54,7 +61,7 @@ public class PlayerMovements : MonoBehaviour
         if (moveDirection.sqrMagnitude > 0.01f)
         {
             moveDirection = CameraRelativeDirection(moveDirection);
-            transform.position += moveDirection * moveSpeed * Time.deltaTime;
+            characterController.Move(moveDirection * moveSpeed * Time.deltaTime);
         }
 
         UpdateAnimation(inputDirection);
