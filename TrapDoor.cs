@@ -3,45 +3,38 @@ using System.Collections;
 
 public class TrapDoor : MonoBehaviour
 {
-    public float rotateAngle = 90f;         // Derajat rotasi jebakan
-    public float rotateSpeed = 200f;        // Kecepatan rotasi
-    public float returnDelay = 1f;          // Tunggu sebelum kembali
-    private bool isActivated = false;
+    public float delay = 2f;
+    public Animator animator;
+    public string activateTrigger = "Activate";
 
-    private Quaternion initialRotation;
-    private Quaternion targetRotation;
-
-    void Start()
+    private void Start()
     {
-        initialRotation = transform.localRotation;
-        targetRotation = initialRotation * Quaternion.Euler(Vector3.up * rotateAngle); // Rotasi di sumbu Y (kiri ke kanan)
+        InvokeRepeating(nameof(ActivateTrap), 0f, delay);
     }
 
-    void Update()
+    private void ActivateTrap()
     {
-        StartCoroutine(ActivateTrap());
+        if (animator != null)
+        {
+            animator.SetTrigger(activateTrigger);
+        }
     }
 
-    IEnumerator ActivateTrap()
+    private void OnTriggerEnter(Collider other)
     {
-        isActivated = true;
-
-        // Putar ke target
-        while (Quaternion.Angle(transform.localRotation, targetRotation) > 0.1f)
+        if (other.CompareTag("Player"))
         {
-            transform.localRotation = Quaternion.RotateTowards(transform.localRotation, targetRotation, rotateSpeed * Time.deltaTime);
-            yield return null;
+            healthBar hb = other.GetComponent<healthBar>();
+            if (hb != null && !IsDead(hb))
+            {
+                // Kasih damage sebesar maxHealth agar langsung mati
+                hb.takeDamage(hb.maxHealth);
+            }
         }
+    }
 
-        yield return new WaitForSeconds(returnDelay);
-
-        // Kembali ke awal
-        while (Quaternion.Angle(transform.localRotation, initialRotation) > 0.1f)
-        {
-            transform.localRotation = Quaternion.RotateTowards(transform.localRotation, initialRotation, rotateSpeed * Time.deltaTime);
-            yield return null;
-        }
-
-        isActivated = false;
+    private bool IsDead(healthBar hb)
+    {
+        return hb.health <= 0;
     }
 }

@@ -30,6 +30,8 @@ public class EnemyAI : MonoBehaviour
     // Health
     public float health = 100f;
 
+    private bool isDead = false;
+
     // Animator
     private Animator animator;
 
@@ -54,6 +56,7 @@ public class EnemyAI : MonoBehaviour
 
     private void Update()
     {
+        if (isDead) return;
         if (player == null) return;
 
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
