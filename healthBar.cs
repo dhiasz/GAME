@@ -5,50 +5,94 @@ using UnityEngine.UI;
 
 public class healthBar : MonoBehaviour
 {
-    public Slider healthSlider;           // Warna merah, update langsung
-    public Slider easeHealthSlider;       // Warna oranye, efek smooth
+    public Slider healthSlider;       // Slider UI utama (langsung)
+    public Slider easeHealthSlider;   // Slider UI efek smoothing (optional)
 
     public float maxHealth = 100f;
     public float health;
 
-    public float lerpSpeed = 2f;          // Kecepatan transisi smooth bar
+    public float lerpSpeed = 2f;
+
+    private Animator animator;
+    private bool isDead = false;
 
     void Start()
     {
         health = maxHealth;
 
-        healthSlider.maxValue = maxHealth;
-        easeHealthSlider.maxValue = maxHealth;
+        if (healthSlider != null)
+            healthSlider.maxValue = maxHealth;
 
-        healthSlider.value = maxHealth;
-        easeHealthSlider.value = maxHealth;
+        if (easeHealthSlider != null)
+            easeHealthSlider.maxValue = maxHealth;
+
+        if (healthSlider != null)
+            healthSlider.value = maxHealth;
+
+        if (easeHealthSlider != null)
+            easeHealthSlider.value = maxHealth;
+
+        animator = GetComponent<Animator>();
+
+        if (animator == null)
+            Debug.LogWarning("Animator not found on " + gameObject.name);
     }
 
     void Update()
     {
-        // Update healthSlider langsung
-        healthSlider.value = health;
+        if (healthSlider != null)
+            healthSlider.value = health;
 
-        // Smooth update easeHealthSlider (jika lebih besar)
-        if (easeHealthSlider.value > health)
+        if (easeHealthSlider != null)
         {
-            easeHealthSlider.value = Mathf.Lerp(easeHealthSlider.value, health, Time.deltaTime * lerpSpeed);
+            if (easeHealthSlider.value > health)
+                easeHealthSlider.value = Mathf.Lerp(easeHealthSlider.value, health, Time.deltaTime * lerpSpeed);
+            else
+                easeHealthSlider.value = health;
         }
-        else
-        {
-            easeHealthSlider.value = health;
-        }
-
-        // Uji coba damage
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            takeDamage(10);
+            takeDamage(50);
         }
     }
 
-    void takeDamage(float damage)
+    public void takeDamage(float damage)
     {
+        if (isDead) return;
+
         health -= damage;
         health = Mathf.Clamp(health, 0, maxHealth);
+
+        Debug.Log($"{gameObject.name} took {damage} damage, health now: {health}");
+
+        if (health <= 0 && !isDead)
+        {
+            Die();
+        }
+
+    }
+
+    private void Die()
+    {
+        isDead = true;
+
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");  // Pastikan ada trigger "Die" di Animator
+        }
+
+        // Contoh: nonaktifkan movement script (jika ada)
+        var playerMovements = GetComponent<PlayerMovements>();
+        if (playerMovements != null)
+            playerMovements.enabled = false;
+
+        var navMeshAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (navMeshAgent != null)
+            navMeshAgent.enabled = false;
+
+        Debug.Log($"{gameObject.name} is dead!");
+
+        // Jika ingin hapus objek setelah delay
+        Destroy(gameObject, 3f);
     }
 }
